@@ -61,6 +61,9 @@ function updateOrCreateUser(userId, email, displayName, photoURL) {
   if (photoURL) {
     updateParams['photoURL'] = photoURL;
   }
+  if (email) {
+    updateParams['email'] = email;
+  }
   console.log(updateParams);
   return firebaseAdmin.auth().updateUser(userId, updateParams)
   .catch((error) => {
@@ -93,11 +96,14 @@ function createFirebaseToken(kakaoAccessToken) {
     }
     let nickname = null;
     let profileImage = null;
+    let email = null
     if (body.properties) {
       nickname = body.properties.nickname;
       profileImage = body.properties.profile_image;
     }
-    return updateOrCreateUser(userId, body.kaccount_email, nickname,
+    if (body.kakao_account.email)
+      email = body.kakao_account.email;
+    return updateOrCreateUser(userId, email, nickname,
       profileImage);
   }).then((userRecord) => {
     const userId = userRecord.uid;
@@ -107,10 +113,11 @@ function createFirebaseToken(kakaoAccessToken) {
     ref.get()
       .then(doc => {
         if(!doc.exists) {
-         console.log('Added document with Id: '+userId);
-	 ref.set({name: userRecord.displayName});
+          console.log('Added document with Id: '+userId);
+          ref.set({name: userRecord.displayName});
+          ref.set({email: userRecord.email})
       } else {
-         console.log('Document data:', doc.data());
+          console.log('Aleady Exist user - Document data:', doc.data());
       }
     });
     return firebaseAdmin.auth().createCustomToken(userId, {provider: 'KAKAO'});
