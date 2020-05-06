@@ -136,6 +136,7 @@ app.get('/', (req, res) => res.status(200)
 // actual endpoint that creates a firebase token with Kakao access token
 app.post('/verifyToken', (req, res) => {
   const token = req.body.token;
+  console.log(token);
   if (!token) return res.status(400).send({error: 'There is no token.'})
   .send({message: 'Access token is a required parameter.'});
 
@@ -148,14 +149,14 @@ app.post('/verifyToken', (req, res) => {
 });
 
 // 이미 서버에 uid가 존재하는지 확인
-app.get('/confirmUid',(req,res) => {
-  const kakaoAccessToken = req.body.token;
+app.post('/confirmUid',(req,res) => {
+  const token = req.body.token;
   if (!token) return res.status(400).send({error: 'There is no token.'})
   .send({message: 'Access token is a required parameter.'});
 
   console.log(`Verifying Kakao token: ${token}`);
 
-  requestMe(kakaoAccessToken).then((response) => {
+  requestMe(token).then((response) => {
     const body = JSON.parse(response);
     console.log(body);
     const userId = `${body.id}`;
@@ -166,11 +167,12 @@ app.get('/confirmUid',(req,res) => {
     
     firebaseAdmin.auth().getUser(userId)
     .then(function(userRecord){
-      console.log(uid+'was alreday registered');
-      res.send({register: "1"});
+      console.log(userId+' was alreday registered');
+      res.send({register: true});
     })
     .catch(function(error){
-      res.send({register: "0"});
+      console.log(userId+' was not registered');
+      res.send({register: false});
     });
   });
 });
