@@ -115,7 +115,6 @@ function createFirebaseToken(kakaoAccessToken) {
         if(!doc.exists) {
           console.log('Added document with Id: '+userId);
           ref.set({name: userRecord.displayName});
-          ref.set({email: userRecord.email})
       } else {
           console.log('Aleady Exist user - Document data:', doc.data());
       }
@@ -148,16 +147,34 @@ app.post('/verifyToken', (req, res) => {
   });
 });
 
+// 이미 서버에 uid가 존재하는지 확인
 app.get('/confirmUid',(req,res) => {
-  firebaseAdmin.auth().getUser(req.body.uid)
-  .then(function(userRecord){
-    console.log(uid+'was alreday registered');
-    res.send('registered');
-  })
-  .catch(function(error){
-    res.send('notRegistered');
+  const kakaoAccessToken = req.body.token;
+  if (!token) return res.status(400).send({error: 'There is no token.'})
+  .send({message: 'Access token is a required parameter.'});
+
+  console.log(`Verifying Kakao token: ${token}`);
+
+  requestMe(kakaoAccessToken).then((response) => {
+    const body = JSON.parse(response);
+    console.log(body);
+    const userId = `${body.id}`;
+    if (!userId) {
+      return res.status(404)
+      .send({message: 'There was no user with the given access token.'});
+    }
+    
+    firebaseAdmin.auth().getUser(userId)
+    .then(function(userRecord){
+      console.log(uid+'was alreday registered');
+      res.send('registered');
+    })
+    .catch(function(error){
+      res.send('notRegistered');
+    });
   });
 });
+
 // Start the server
 const server = app.listen(process.env.PORT || '8000', () => {
   console.log('KakaoLoginServer for Firebase listening on port %s',
