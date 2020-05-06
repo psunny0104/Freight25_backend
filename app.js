@@ -167,10 +167,10 @@ app.get('/confirmUid',(req,res) => {
     firebaseAdmin.auth().getUser(userId)
     .then(function(userRecord){
       console.log(uid+'was alreday registered');
-      res.send('registered');
+      res.send({register: "1"});
     })
     .catch(function(error){
-      res.send('notRegistered');
+      res.send({register: "0"});
     });
   });
 });
