@@ -167,8 +167,12 @@ app.post('/confirmUid',(req,res) => {
     
     firebaseAdmin.auth().getUser(userId)
     .then(function(userRecord){
-      console.log(userId+' was alreday registered');
-      res.send({register: true});
+      //존재하는 경우 바로 인증함
+      createFirebaseToken(token).then((firebaseToken) => {
+        console.log(`Returning firebase token to user: ${firebaseToken}`);
+        console.log(userId+' was alreday registered');
+        res.send({register: true, firebase_token: firebaseToken});
+      });
     })
     .catch(function(error){
       console.log(userId+' was not registered');
