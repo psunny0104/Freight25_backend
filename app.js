@@ -109,11 +109,13 @@ function createFirebaseToken(kakaoAccessToken, userType) {
     const userId = userRecord.uid;
     console.log(`creating a custom firebase token based on uid ${userId}`);
     //db create drivers만 가능 -> 수정 필요
-    let ref;
-    if(userType == 'drivers')
+    let ref = null;
+    if(userType == 'drivers'){
       ref = db.collection('drivers').doc(userId);
-    else if(userType == 'owners')
+    }
+    else if(userType == 'owners'){
       ref = db.collection('owners').doc(userId);  
+    }
     ref.get()
       .then(doc => {
         if(!doc.exists) {
