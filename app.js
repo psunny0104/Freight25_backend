@@ -85,7 +85,7 @@ function updateOrCreateUser(userId, email, displayName, photoURL) {
  * @param  {String} kakaoAccessToken access token from Kakao Login API
  * @return {Promise<String>}                  Firebase token in a promise
  */
-function createFirebaseToken(kakaoAccessToken) {
+function createFirebaseToken(kakaoAccessToken, userType) {
   return requestMe(kakaoAccessToken).then((response) => {
     const body = JSON.parse(response);
     console.log(body);
@@ -109,7 +109,11 @@ function createFirebaseToken(kakaoAccessToken) {
     const userId = userRecord.uid;
     console.log(`creating a custom firebase token based on uid ${userId}`);
     //db create drivers만 가능 -> 수정 필요
-    let ref = db.collection('drivers').doc(userId);
+    let ref;
+    if(userType == 'drivers')
+      ref = db.collection('drivers').doc(userId);
+    else if(userType == 'owners')
+      ref = db.collection('owners').doc(userId);  
     ref.get()
       .then(doc => {
         if(!doc.exists) {
@@ -136,13 +140,15 @@ app.get('/', (req, res) => res.status(200)
 // actual endpoint that creates a firebase token with Kakao access token
 app.post('/verifyToken', (req, res) => {
   const token = req.body.token;
+  const type = req.body.type;
+
   console.log(token);
   if (!token) return res.status(400).send({error: 'There is no token.'})
   .send({message: 'Access token is a required parameter.'});
 
   console.log(`Verifying Kakao token: ${token}`);
 
-  createFirebaseToken(token).then((firebaseToken) => {
+  createFirebaseToken(token, type).then((firebaseToken) => {
     console.log(`Returning firebase token to user: ${firebaseToken}`);
     res.send({firebase_token: firebaseToken});
   });
