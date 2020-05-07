@@ -87,6 +87,7 @@ function updateOrCreateUser(userId, email, displayName, photoURL) {
  */
 function createFirebaseToken(kakaoAccessToken, type) {
   var userType = type;
+  console.log("1"+userType);
   return requestMe(kakaoAccessToken).then((response) => {
     const body = JSON.parse(response);
     console.log(body);
@@ -111,12 +112,14 @@ function createFirebaseToken(kakaoAccessToken, type) {
     console.log(`creating a custom firebase token based on uid ${userId}`);
     //db create drivers만 가능 -> 수정 필요
     let ref = null;
+    console.log("2"+userType);
     if(userType == 'drivers'){
       ref = db.collection('drivers').doc(userId);
     }
     else if(userType == 'owners'){
       ref = db.collection('owners').doc(userId);  
     }
+    console.log("ref: "+ref);
     ref.get()
       .then(doc => {
         if(!doc.exists) {
@@ -188,11 +191,11 @@ app.post('/confirmUid',(req,res) => {
             type = 'drivers';
             console.log('Aleady Exist Driver:', doc.data());
         }
-      });
-      createFirebaseToken(token, type).then((firebaseToken) => {
-        console.log(`Returning firebase token to user: ${firebaseToken}`);
-        console.log(userId+' was alreday registered');
-        res.send({register: true, firebase_token: firebaseToken});
+        createFirebaseToken(token, type).then((firebaseToken) => {
+          console.log(`Returning firebase token to user: ${firebaseToken}`);
+          console.log(userId+' was alreday registered');
+          res.send({register: true, firebase_token: firebaseToken});
+        });
       });
     })
     .catch(function(error){
