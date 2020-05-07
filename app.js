@@ -85,7 +85,8 @@ function updateOrCreateUser(userId, email, displayName, photoURL) {
  * @param  {String} kakaoAccessToken access token from Kakao Login API
  * @return {Promise<String>}                  Firebase token in a promise
  */
-function createFirebaseToken(kakaoAccessToken, userType) {
+function createFirebaseToken(kakaoAccessToken, type) {
+  var userType = type;
   return requestMe(kakaoAccessToken).then((response) => {
     const body = JSON.parse(response);
     console.log(body);
@@ -176,7 +177,19 @@ app.post('/confirmUid',(req,res) => {
     firebaseAdmin.auth().getUser(userId)
     .then(function(userRecord){
       //존재하는 경우 바로 인증함
-      createFirebaseToken(token).then((firebaseToken) => {
+      let type = null;
+      let ref = db.collection('drivers').doc(userId);  
+       ref.get()
+        .then(doc => {
+          if(!doc.exists) {
+            type = 'owners';
+            console.log('Aleady Exist Owner:', doc.data());
+        } else {
+            type = 'drivers';
+            console.log('Aleady Exist Driver:', doc.data());
+        }
+      });
+      createFirebaseToken(token, type).then((firebaseToken) => {
         console.log(`Returning firebase token to user: ${firebaseToken}`);
         console.log(userId+' was alreday registered');
         res.send({register: true, firebase_token: firebaseToken});
