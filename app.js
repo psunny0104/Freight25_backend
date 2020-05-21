@@ -85,7 +85,9 @@ function updateOrCreateUser(userId, email, displayName, photoURL) {
  * @param  {String} kakaoAccessToken access token from Kakao Login API
  * @return {Promise<String>}                  Firebase token in a promise
  */
-function createFirebaseToken(kakaoAccessToken, userType) {
+function createFirebaseToken(kakaoAccessToken, type) {
+  var userType = type;
+  console.log("1"+userType);
   return requestMe(kakaoAccessToken).then((response) => {
     const body = JSON.parse(response);
     console.log(body);
@@ -110,12 +112,14 @@ function createFirebaseToken(kakaoAccessToken, userType) {
     console.log(`creating a custom firebase token based on uid ${userId}`);
     //db create drivers만 가능 -> 수정 필요
     let ref = null;
+    console.log("2"+userType);
     if(userType == 'drivers'){
       ref = db.collection('drivers').doc(userId);
     }
     else if(userType == 'owners'){
       ref = db.collection('owners').doc(userId);  
     }
+    console.log("ref: "+ref);
     ref.get()
       .then(doc => {
         if(!doc.exists) {
@@ -176,10 +180,22 @@ app.post('/confirmUid',(req,res) => {
     firebaseAdmin.auth().getUser(userId)
     .then(function(userRecord){
       //존재하는 경우 바로 인증함
-      createFirebaseToken(token).then((firebaseToken) => {
-        console.log(`Returning firebase token to user: ${firebaseToken}`);
-        console.log(userId+' was alreday registered');
-        res.send({register: true, firebase_token: firebaseToken});
+      let type = null;
+      let ref = db.collection('drivers').doc(userId);  
+       ref.get()
+        .then(doc => {
+          if(!doc.exists) {
+            type = 'owners';
+            console.log('Aleady Exist Owner:', doc.data());
+        } else {
+            type = 'drivers';
+            console.log('Aleady Exist Driver:', doc.data());
+        }
+        createFirebaseToken(token, type).then((firebaseToken) => {
+          console.log(`Returning firebase token to user: ${firebaseToken}`);
+          console.log(userId+' was alreday registered');
+          res.send({register: true, firebase_token: firebaseToken});
+        });
       });
     })
     .catch(function(error){
@@ -194,3 +210,4 @@ const server = app.listen(process.env.PORT || '8000', () => {
   console.log('KakaoLoginServer for Firebase listening on port %s',
   server.address().port);
 });
+
